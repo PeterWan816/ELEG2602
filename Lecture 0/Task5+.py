@@ -1,5 +1,6 @@
 from gtts import gTTS
 from pygame import time, mixer
+from search_engines import bing_search
 
 import pywhatkit
 import csv
@@ -9,6 +10,7 @@ import pyjokes
 import os
 import speech_recognition as sr
 import threading
+import requests
 
 assistant_name = 'Lucy'
 listener = sr.Recognizer()
@@ -93,11 +95,29 @@ while True:
                             speak("Got it, I'll help you to " + song + ', your majesty!')
 
                             pywhatkit.playonyt(song)
-                        elif 'search' in command:
-                            item = command.replace('search', '')
-                            info = wikipedia.summary(item, 1)
+                        elif 'who is' in command:
+                            person = command.replace('who is', '')
+                            info = wikipedia.summary(person, 1)
                             print(info)
                             speak(info)
+                        elif 'search' in command:
+                            item = command.replace('search', '')
+                            url = bing_search.get_search_url(item)
+                            resp = requests.get(url)
+                            html = resp.text
+                            result = bing_search.extract_search_results(html, url)
+                            speak("i have found"+str(len(result[0]))+"results on the web")
+                            speak("The first result said" + result[0][0]['preview_text'])
+                        elif 'ping' in command or 'pink' in command:
+                            if 'ping' in command:
+                                item = command.replace('ping ', '')
+                            else:
+                                item = command.replace('pink ', '')
+                            resp = requests.get("https://"+item+".com")
+                            if resp.status_code == 200:
+                                speak( item + "is up")
+                            else:
+                                speak(item + "is down")
                         elif 'time' in command:
                             time = datetime.datetime.now().strftime('%I:%M %p')
                             speak('Current time is ' + time)
